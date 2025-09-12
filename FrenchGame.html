@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kunstdiebjagd in Paris</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Special+Elite&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Special Elite', cursive;
+            background-color: #FDF5E6; /* Old paper color */
+        }
+        .font-title {
+            font-family: 'IM Fell English SC', serif;
+        }
+        .clue-card {
+            background-color: #fff;
+            border: 1px solid #D2B48C;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+            transform: rotate(-1deg);
+        }
+        .answer-area {
+            border: 2px dashed #D2B48C;
+            min-height: 50px;
+            background-color: #f9f6f0;
+        }
+        .letter-tile {
+            border: 1px solid #A0522D;
+            background-color: #DEB887;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .letter-tile:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 4px 4px 8px rgba(0,0,0,0.3);
+        }
+        .letter-tile:active {
+            transform: translateY(1px);
+        }
+        .feedback-correct {
+            color: #228B22;
+        }
+        .feedback-incorrect {
+            color: #B22222;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        .story-container {
+             background-image: url('https://www.transparenttextures.com/patterns/old-paper.png');
+        }
+        #rewardModal {
+            transition: opacity 0.3s ease;
+        }
+        .stamp {
+            position: absolute;
+            opacity: 0.1;
+            transform: rotate(-25deg);
+            color: #B22222;
+            top: 50%;
+            left: 50%;
+            transform-origin: center;
+            pointer-events: none; /* Make sure it's not clickable */
+        }
+    </style>
+</head>
+<body class="bg-[#FDF5E6] text-[#5D4037] p-4 md:p-8">
+
+    <div id="gameContainer" class="max-w-4xl mx-auto hidden">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-title">Kunstdiebjagd in Paris</h1>
+            <p class="text-lg mt-2">Mission: Fange "Le Corbeau"</p>
+        </header>
+        
+        <div id="story-container" class="story-container p-6 border-2 border-dashed border-[#D2B48C] mb-8 rounded-lg relative">
+             <div class="stamp font-title text-7xl md:text-9xl">TOP SECRET</div>
+             <h2 class="font-title text-2xl mb-2 text-center">Fallakte: 007</h2>
+             <p id="story-text" class="text-lg leading-relaxed text-center">Willkommen, Detektiv. Der berüchtigte Kunstdieb "Le Corbeau" hat wieder zugeschlagen! Er hat eine Spur von Hinweisen in ganz Paris hinterlassen. Löse die Vokabelrätsel, um ihn aufzuspüren. Dein erster Hinweis wurde in der Nähe einer Schule gefunden... es scheint, als ob er deine Grundkenntnisse testet. Viel Glück!</p>
+        </div>
+
+
+        <div class="clue-card p-6 rounded-lg mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <span id="level" class="font-title text-2xl">Level 1</span>
+                <span id="word-counter" class="text-lg">Wort 1 / 10</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-[#EAE0D5] rounded-full h-4 mb-6 border border-[#D2B48C]">
+                <div id="progress-bar" class="bg-[#A0522D] h-full rounded-full progress-bar-inner" style="width: 0%"></div>
+            </div>
+
+            <p class="text-center text-xl mb-2">Übersetze dieses deutsche Wort:</p>
+            <h2 id="german-word" class="text-center text-3xl md:text-4xl font-bold mb-6"></h2>
+
+            <div id="answer-area" class="answer-area rounded-lg p-3 flex justify-center items-center flex-wrap gap-2 mb-6">
+                <!-- Selected letters will appear here -->
+            </div>
+
+            <div id="letter-options" class="flex justify-center flex-wrap gap-2 sm:gap-3 mb-6">
+                <!-- Letter tiles will be generated here -->
+            </div>
+
+            <div class="flex justify-center gap-4">
+                 <button id="clear-btn" class="px-6 py-2 bg-[#8B4513] text-white rounded-lg shadow-md hover:bg-[#A0522D] transition-colors font-bold text-lg">Löschen</button>
+                <button id="check-btn" class="px-6 py-2 bg-[#556B2F] text-white rounded-lg shadow-md hover:bg-[#6B8E23] transition-colors font-bold text-lg">Antwort prüfen</button>
+            </div>
+        </div>
+
+        <div id="feedback-container" class="text-center text-xl h-20">
+            <!-- Feedback messages will be displayed here -->
+        </div>
+        
+    </div>
+    
+    <div id="startScreen" class="min-h-screen flex flex-col justify-center items-center text-center p-4">
+        <h1 class="text-5xl sm:text-6xl md:text-7xl font-title mb-4">Kunstdiebjagd in Paris</h1>
+        <p class="text-xl md:text-2xl mb-8 max-w-2xl">Ein Französisch-Vokabelspiel, um dein Wissen zu testen und einen Dieb zu fangen!</p>
+        <button id="start-btn" class="px-10 py-4 bg-[#556B2F] text-white rounded-lg shadow-xl hover:bg-[#6B8E23] transition-transform hover:scale-105 transform text-2xl font-bold">Ermittlung starten</button>
+    </div>
+
+    <!-- Reward Modal -->
+    <div id="rewardModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center hidden opacity-0">
+        <div class="bg-white p-8 rounded-lg text-center shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-transform duration-300">
+            <h2 id="rewardTitle" class="text-3xl font-title mb-4">Level abgeschlossen!</h2>
+            <p id="rewardMessage" class="text-lg mb-4">Gute Arbeit, Detektiv! Du hast die Hinweise zusammengesetzt.</p>
+            <img id="rewardGif" src="" alt="Lustiges Tier-GIF" class="mx-auto rounded-lg shadow-lg mb-6 max-h-64">
+            <button id="nextLevelBtn" class="px-6 py-2 bg-[#556B2F] text-white rounded-lg shadow-md hover:bg-[#6B8E23] transition-colors font-bold text-lg">Ermittlung fortsetzen</button>
+        </div>
+    </div>
+
+
+    <script>
+        const vocabulary = [
+            // Level 1: Lernziel 1 & 5
+            { level: 1, german: "der Schulanfang", french: "la rentrée", story: "Le Corbeau hat diese Notiz am ersten Schultag in der Nähe einer Schule fallen gelassen. Was für ein Klassiker!" },
+            { level: 1, german: "das Lineal", french: "la règle", story: "Er benutzte ein Lineal, um eine perfekt gerade Linie in den Staub zu ziehen... ein Hinweis!"},
+            { level: 1, german: "der Ordner", french: "le classeur", story: "Eine einzelne Seite aus einem Ordner wurde zurückgelassen... was stand darauf?" },
+            { level: 1, german: "das Heft", french: "le cahier", story: "Das sieht aus wie eine Seite, die aus dem Notizbuch eines Schülers gerissen wurde." },
+            { level: 1, german: "der Stift", french: "le stylo", story: "Er hat einen Füller zurückgelassen. Die Marke ist 'L'Artiste'. Wie passend." },
+            { level: 1, german: "der Bleistift", french: "le crayon", story: "Eine Skizze einer Krähe, gezeichnet mit genau diesem Bleistift, ist dein einziger Hinweis." },
+            { level: 1, german: "die Wandtafel", french: "le tableau noir", story: "Eine Nachricht an der Wandtafel, mit Kreide geschrieben: 'Fang mich, wenn du kannst!'" },
+            { level: 1, german: "das Etui", french: "la trousse", story: "Ein leeres Etui. Er muss seine Werkzeuge für den nächsten Raub gebraucht haben." },
+            { level: 1, german: "die Schultasche", french: "le cartable", story: "Er tauschte seine Tasche mit Diebesgut gegen einen alten Schulranzen. Schlau." },
+            { level: 1, german: "die Schere", french: "les ciseaux", story: "Mit einer Schere wurde eine Karte aus einer Zeitschrift ausgeschnitten." },
+
+            // Level 2: Lernziel 2
+            { level: 2, german: "Deutsch", french: "l'allemand", story: "Er verspottet dich in deiner eigenen Sprache und hinterlässt eine deutsche Zeitung." },
+            { level: 2, german: "Englisch", french: "l'anglais", story: "Eine Nachricht auf Englisch deutet darauf hin, dass er zu einem internationalen Wahrzeichen unterwegs ist." },
+            { level: 2, german: "Montag", french: "lundi", story: "Der nächste Diebstahl ist für Montag geplant. Die Zeit wird knapp!" },
+            { level: 2, german: "Freitag", french: "vendredi", story: "Er schlägt immer an einem Freitag zu, kurz vor dem Wochenende." },
+            { level: 2, german: "die Zeichnung", french: "le dessin", story: "Eine schnelle Skizze der Mona Lisa... ist das sein nächstes Ziel?!" },
+            { level: 2, german: "die Geografie", french: "la géographie", story: "Er benutzt eine Landkarte, um seine Fluchtroute durch Paris zu planen." },
+            { level: 2, german: "die Geschichte", french: "l'histoire", story: "Das nächste Ziel ist ein historisches Artefakt von grossem Wert." },
+            { level: 2, german: "das Turnen", french: "la gymnastique", story: "Er ist wendig wie ein Turner. Du musst schnell sein, um ihn zu fangen." },
+            { level: 2, german: "die Musik", french: "la musique", story: "Eine leise Melodie liegt in der Luft... er hat Oper gehört." },
+            { level: 2, german: "Handarbeit und Werken", french: "activités créatrices manuelles", story: "Er hat eine kleine Holzkrähe gebastelt, eine Visitenkarte, die am Tatort zurückgelassen wurde."},
+
+            // Level 3: Lernziel 3
+            { level: 3, german: "rechnen", french: "calculer", story: "Er musste die genaue Zeit des Wachwechsels berechnen." },
+            { level: 3, german: "zeichnen", french: "dessiner", story: "Er hat einen detaillierten Plan des Museums gezeichnet." },
+            { level: 3, german: "singen", french: "chanter", story: "Ein Zeuge hörte ihn auf seiner Flucht ein französisches Lied singen." },
+            { level: 3, german: "Französisch sprechen", french: "parler français", story: "Er spricht perfekt Französisch, um sich unter die Einheimischen zu mischen." },
+            { level: 3, german: "ein Museum besuchen", french: "visiter un musée", story: "Sein nächster Schritt ist klar: ein Museumsbesuch, aber nicht als Tourist." },
+            { level: 3, german: "stricken", french: "tricoter", story: "Ein einzelner schwarzer Wollfaden wurde gefunden, als hätte er sich die Zeit mit Stricken vertrieben." },
+            { level: 3, german: "ein Gedicht aufsagen", french: "réciter un poème", story: "Er rezitierte ein berühmtes französisches Gedicht vor einer Überwachungskamera, bevor er sie ausschaltete." },
+            { level: 3, german: "basteln", french: "bricoler", story: "Er hat am Sicherheitssystem gebastelt, um eine Ablenkung zu schaffen." },
+            { level: 3, german: "springen, hüpfen", french: "sauter", story: "Er musste von einem Dach zum anderen springen, um zu entkommen." },
+            { level: 3, german: "klettern", french: "grimper", story: "Er muss die efeubewachsene Mauer hochgeklettert sein, um unbemerkt hineinzugelangen." }
+        ];
+
+        const rewardGifs = [
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExejE2MXY4N2R1Z2o0NWExdnhuODhvdTVuajB2bDY3eDRocW5oc2Q0YyZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/3o7abKhOpu0NwenH3O/giphy.gif",
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzJjc3NmaDhja3FscXB1M2d0OHJ6a2FmM3J0MWozc2E0NnZzcnNmdSZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/kEKcOWl8RMLde/giphy.gif",
+            "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2M5OGt3em1yd2Ficnp0a3FsOWhlc3MxbTF0cjB0aDhubDhvdnp3YyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/m6OomwWCojfS8/giphy.gif"
+        ];
+        
+        let currentLevel = 1;
+        let wordsForLevel = []; // This will be our dynamic queue of words to ask
+        let initialWordCount = 0;
+        let isIncorrectState = false;
+        let selectedLetters = [];
+
+        const startScreen = document.getElementById('startScreen');
+        const startBtn = document.getElementById('start-btn');
+        const gameContainer = document.getElementById('gameContainer');
+        const levelDisplay = document.getElementById('level');
+        const wordCounterDisplay = document.getElementById('word-counter');
+        const germanWordDisplay = document.getElementById('german-word');
+        const answerArea = document.getElementById('answer-area');
+        const letterOptions = document.getElementById('letter-options');
+        const checkBtn = document.getElementById('check-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const feedbackContainer = document.getElementById('feedback-container');
+        const progressBar = document.getElementById('progress-bar');
+        const storyText = document.getElementById('story-text');
+        const rewardModal = document.getElementById('rewardModal');
+        const rewardTitle = document.getElementById('rewardTitle');
+        const rewardMessage = document.getElementById('rewardMessage');
+        const rewardGif = document.getElementById('rewardGif');
+        const nextLevelBtn = document.getElementById('nextLevelBtn');
+
+
+        function startGame() {
+            startScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            loadLevel(currentLevel);
+        }
+
+        function loadLevel(level) {
+            currentLevel = level;
+            const words = vocabulary.filter(word => word.level === currentLevel);
+            initialWordCount = words.length;
+            wordsForLevel = shuffleArray(words); // Shuffle words for random order
+            levelDisplay.textContent = `Level ${currentLevel}`;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset state from a possible previous incorrect answer
+            isIncorrectState = false;
+            checkBtn.textContent = 'Antwort prüfen';
+            feedbackContainer.innerHTML = '';
+
+            if (wordsForLevel.length === 0) {
+                showReward();
+                return;
+            }
+
+            const currentWord = wordsForLevel[0];
+            storyText.textContent = currentWord.story;
+            germanWordDisplay.textContent = currentWord.german;
+            wordCounterDisplay.textContent = `Wort ${initialWordCount - wordsForLevel.length + 1} / ${initialWordCount}`;
+            updateProgressBar();
+            
+            clearAnswer();
+            generateLetterTiles(currentWord.french);
+        }
+
+        function generateLetterTiles(frenchWord) {
+            letterOptions.innerHTML = '';
+            const correctLetters = frenchWord.replace(/\s/g, '').split('');
+
+            // Add some distractor letters
+            const alphabet = 'abcdefghijklmnopqrstuvwxyzéàèçâêîôû';
+            let distractors = [];
+            while (distractors.length < 5) {
+                const randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+                if (!correctLetters.includes(randomLetter)) {
+                    distractors.push(randomLetter);
+                }
+            }
+
+            const allLetters = shuffleArray([...correctLetters, ...distractors]);
+
+            allLetters.forEach(letter => {
+                const tile = document.createElement('button');
+                tile.className = 'letter-tile w-10 h-10 sm:w-12 sm:h-12 text-xl sm:text-2xl font-bold rounded-md flex items-center justify-center';
+                tile.textContent = letter;
+                tile.onclick = () => selectLetter(letter);
+                letterOptions.appendChild(tile);
+            });
+            
+            const spaceTile = document.createElement('button');
+            spaceTile.className = 'letter-tile w-20 sm:w-24 h-10 sm:h-12 text-md sm:text-lg font-bold rounded-md flex items-center justify-center';
+            spaceTile.textContent = 'Leertaste';
+            spaceTile.onclick = () => selectLetter(' ');
+            letterOptions.appendChild(spaceTile);
+        }
+        
+        function selectLetter(letter) {
+            selectedLetters.push(letter);
+            renderAnswer();
+        }
+        
+        function renderAnswer() {
+            answerArea.innerHTML = '';
+            selectedLetters.forEach((letter, index) => {
+                const tile = document.createElement('div');
+                if (letter === ' ') {
+                    tile.className = 'w-4 sm:w-6 h-10 sm:h-12';
+                } else {
+                    tile.className = 'letter-tile w-10 h-10 sm:w-12 sm:h-12 text-xl sm:text-2xl font-bold rounded-md flex items-center justify-center';
+                    tile.textContent = letter;
+                }
+                tile.onclick = () => removeLetter(index);
+                answerArea.appendChild(tile);
+            });
+        }
+        
+        function removeLetter(index) {
+            selectedLetters.splice(index, 1);
+            renderAnswer();
+        }
+
+        function clearAnswer() {
+            selectedLetters = [];
+            renderAnswer();
+            feedbackContainer.innerHTML = '';
+        }
+
+        function checkAnswer() {
+            const userAnswer = selectedLetters.join('');
+            const currentWord = wordsForLevel[0];
+            const correctAnswer = currentWord.french;
+
+            if (userAnswer === correctAnswer) {
+                feedbackContainer.innerHTML = `<p class="feedback-correct font-bold">Korrekt! Gut gemacht, Detektiv.</p>`;
+                wordsForLevel.shift(); // Correct, so remove word from queue
+                setTimeout(() => {
+                    loadQuestion();
+                }, 1500);
+            } else {
+                isIncorrectState = true;
+                const explanation = currentWord.french;
+                feedbackContainer.innerHTML = `<p class="feedback-incorrect font-bold">Nicht ganz. Le Corbeau ist raffiniert!</p><p>Die richtige Antwort ist: <strong>${explanation}</strong></p>`;
+                checkBtn.textContent = 'Nächstes Wort';
+                shakeElement(gameContainer.querySelector('.clue-card'));
+
+                // Incorrect, so move word to a random later position in the queue
+                const failedWord = wordsForLevel.shift();
+                if (wordsForLevel.length > 0) {
+                    const insertIndex = 1 + Math.floor(Math.random() * wordsForLevel.length);
+                    wordsForLevel.splice(insertIndex, 0, failedWord);
+                } else {
+                    wordsForLevel.push(failedWord); // Add it back if it's the last word
+                }
+            }
+        }
+        
+        function updateProgressBar() {
+            const wordsDone = initialWordCount - wordsForLevel.length;
+            const progress = initialWordCount > 0 ? (wordsDone / initialWordCount) * 100 : 0;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        function showReward() {
+            const modal = document.getElementById('rewardModal');
+            const gif = document.getElementById('rewardGif');
+            
+            if (currentLevel < 3) {
+                rewardTitle.textContent = `Level ${currentLevel} abgeschlossen!`;
+                rewardMessage.textContent = `Hervorragende Arbeit! Du hast Le Corbeau in die Enge getrieben. Er hat eine Karte zu seinem nächsten Versteck hinterlassen.`;
+                gif.src = rewardGifs[currentLevel - 1];
+                nextLevelBtn.textContent = 'Ermittlung fortsetzen';
+                nextLevelBtn.onclick = () => {
+                    currentLevel++;
+                    hideReward();
+                    loadLevel(currentLevel);
+                };
+            } else {
+                rewardTitle.textContent = `Du hast Le Corbeau gefasst!`;
+                rewardMessage.textContent = `Gratuliere, Detektiv! Du hast den Dieb erfolgreich aufgespürt und die gestohlene Kunst sichergestellt. Paris ist dank dir wieder sicher!`;
+                gif.src = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2Y0M3JkOG40czh3MWRhYmd1MDM3bTZuMnE2a2x6ZmptZ2JmYjN0MSZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/3oFzmf92nEh2I1y4vK/giphy.gif';
+                nextLevelBtn.textContent = 'Nochmal spielen';
+                 nextLevelBtn.onclick = () => {
+                    location.reload();
+                };
+            }
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.add('scale-100');
+            }, 10);
+        }
+
+        function hideReward() {
+            const modal = document.getElementById('rewardModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            setTimeout(() => {
+                 modal.classList.add('hidden');
+            }, 300);
+        }
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        function shakeElement(element) {
+            element.classList.add('animate-shake');
+            setTimeout(() => {
+                element.classList.remove('animate-shake');
+            }, 500);
+        }
+
+        function handleKeyPress(e) {
+            if (gameContainer.classList.contains('hidden') || !rewardModal.classList.contains('hidden')) {
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                checkBtn.click(); // Programmatically click the button to handle both states
+            } else if (e.key === 'Backspace') {
+                clearBtn.click(); // Programmatically click the clear button
+            } else if (/^[a-zA-Z\sàâçéèêëîïôûùüÿæœ]$/.test(e.key)) {
+                // Do not check answer on letter input
+                selectLetter(e.key.toLowerCase());
+            }
+        }
+        
+        document.addEventListener('keydown', handleKeyPress);
+
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes shake {
+                10%, 90% { transform: translate3d(-1px, 0, 0) rotate(-1deg); }
+                20%, 80% { transform: translate3d(2px, 0, 0) rotate(-1deg); }
+                30%, 50%, 70% { transform: translate3d(-4px, 0, 0) rotate(-1deg); }
+                40%, 60% { transform: translate3d(4px, 0, 0) rotate(-1deg); }
+            }
+            .animate-shake {
+                animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            }
+        `;
+        document.head.appendChild(style);
+
+        startBtn.addEventListener('click', startGame);
+        
+        checkBtn.addEventListener('click', () => {
+            if (isIncorrectState) {
+                loadQuestion();
+            } else {
+                checkAnswer();
+            }
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            selectedLetters.pop();
+            renderAnswer();
+        });
+
+    </script>
+</body>
+</html>
+
