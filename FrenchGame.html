@@ -39,6 +39,12 @@
         .letter-tile:active {
             transform: translateY(1px);
         }
+        .letter-tile:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
         .feedback-correct {
             color: #228B22;
         }
@@ -181,6 +187,7 @@
         let wordsForLevel = []; // This will be our dynamic queue of words to ask
         let initialWordCount = 0;
         let isIncorrectState = false;
+        let isAnswerLocked = false;
         let selectedLetters = [];
 
         const startScreen = document.getElementById('startScreen');
@@ -220,6 +227,9 @@
         function loadQuestion() {
             // Reset state from a possible previous incorrect answer
             isIncorrectState = false;
+            isAnswerLocked = false;
+            clearBtn.disabled = false;
+            checkBtn.disabled = false;
             checkBtn.textContent = 'Antwort prüfen';
             feedbackContainer.innerHTML = '';
 
@@ -270,6 +280,7 @@
         }
         
         function selectLetter(letter) {
+            if (isAnswerLocked) return;
             selectedLetters.push(letter);
             renderAnswer();
         }
@@ -290,6 +301,7 @@
         }
         
         function removeLetter(index) {
+            if (isAnswerLocked) return;
             selectedLetters.splice(index, 1);
             renderAnswer();
         }
@@ -301,6 +313,15 @@
         }
 
         function checkAnswer() {
+            if (isAnswerLocked) return;
+            isAnswerLocked = true;
+
+            // Disable all interactive elements
+            clearBtn.disabled = true;
+            checkBtn.disabled = true;
+            const letterTiles = letterOptions.querySelectorAll('button');
+            letterTiles.forEach(tile => tile.disabled = true);
+            
             const userAnswer = selectedLetters.join('');
             const currentWord = wordsForLevel[0];
             const correctAnswer = currentWord.french;
@@ -316,6 +337,7 @@
                 const explanation = currentWord.french;
                 feedbackContainer.innerHTML = `<p class="feedback-incorrect font-bold">Nicht ganz. Le Corbeau ist raffiniert!</p><p>Die richtige Antwort ist: <strong>${explanation}</strong></p>`;
                 checkBtn.textContent = 'Nächstes Wort';
+                checkBtn.disabled = false; // Re-enable only the check button to proceed
                 shakeElement(gameContainer.querySelector('.clue-card'));
 
                 // Incorrect, so move word to a random later position in the queue
@@ -391,7 +413,7 @@
         }
 
         function handleKeyPress(e) {
-            if (gameContainer.classList.contains('hidden') || !rewardModal.classList.contains('hidden')) {
+            if (isAnswerLocked || gameContainer.classList.contains('hidden') || !rewardModal.classList.contains('hidden')) {
                 return;
             }
 
@@ -431,6 +453,7 @@
         });
         
         clearBtn.addEventListener('click', () => {
+            if (isAnswerLocked) return;
             selectedLetters.pop();
             renderAnswer();
         });
