@@ -68,6 +68,9 @@
 </head>
 <body class="bg-[#FDF5E6] text-[#5D4037] p-4 md:p-8">
 
+    <!-- Hidden input to trigger mobile keyboard -->
+    <input type="text" id="keyboard-input" aria-label="Game input" style="position: absolute; top: -9999px; left: -9999px;">
+
     <div id="gameContainer" class="max-w-4xl mx-auto hidden">
         <header class="text-center mb-6">
             <h1 class="text-4xl sm:text-5xl md:text-6xl font-title">Kunstdiebjagd in Paris</h1>
@@ -174,7 +177,7 @@
         const rewardGifs = [
             "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExejE2MXY4N2R1Z2o0NWExdnhuODhvdTVuajB2bDY3eDRocW5oc2Q0YyZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/3o7abKhOpu0NwenH3O/giphy.gif",
             "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzJjc3NmaDhja3FscXB1M2d0OHJ6a2FmM3J0MWozc2E0NnZzcnNmdSZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/kEKcOWl8RMLde/giphy.gif",
-            "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2M5OGt3em1yd2Ficnp0a3FsOWhlc3MxbTF0cjB0aDhubDhvdnp3YyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/m6OomwWCojfS8/giphy.gif"
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTRiNjd5ZHNqZm1ldmJ0cTNpZnJkZXlmeGIwYWV3ZzV4aXBqOHRjayZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/SggILpM5fjkkw/giphy.gif"
         ];
         
         let currentLevel = 1;
@@ -201,12 +204,19 @@
         const rewardMessage = document.getElementById('rewardMessage');
         const rewardGif = document.getElementById('rewardGif');
         const nextLevelBtn = document.getElementById('nextLevelBtn');
+        const keyboardInput = document.getElementById('keyboard-input');
 
+
+        function refocusInput() {
+            // This brings up the keyboard on mobile devices
+            keyboardInput.focus();
+        }
 
         function startGame() {
             startScreen.classList.add('hidden');
             gameContainer.classList.remove('hidden');
             loadLevel(currentLevel);
+            refocusInput();
         }
 
         function loadLevel(level) {
@@ -237,6 +247,7 @@
             
             clearAnswer();
             generateLetterTiles(currentWord.french);
+            refocusInput();
         }
 
         function generateLetterTiles(frenchWord) {
@@ -337,6 +348,7 @@
         }
 
         function showReward() {
+            keyboardInput.blur(); // Hide keyboard when reward shows
             const modal = document.getElementById('rewardModal');
             const gif = document.getElementById('rewardGif');
             
@@ -401,12 +413,13 @@
             } else if (e.key === 'Backspace') {
                 clearBtn.click(); // Programmatically click the clear button
             } else if (/^[a-zA-Z\sàâçéèêëîïôûùüÿæœ]$/.test(e.key)) {
-                // Do not check answer on letter input
                 selectLetter(e.key.toLowerCase());
             }
         }
         
         document.addEventListener('keydown', handleKeyPress);
+        gameContainer.addEventListener('click', refocusInput);
+
 
         const style = document.createElement('style');
         style.innerHTML = `
