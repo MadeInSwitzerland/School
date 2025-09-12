@@ -68,9 +68,6 @@
 </head>
 <body class="bg-[#FDF5E6] text-[#5D4037] p-4 md:p-8">
 
-    <!-- Hidden input to trigger mobile keyboard -->
-    <input type="text" id="keyboard-input" aria-label="Game input" style="position: absolute; top: -9999px; left: -9999px;">
-
     <div id="gameContainer" class="max-w-4xl mx-auto hidden">
         <header class="text-center mb-6">
             <h1 class="text-4xl sm:text-5xl md:text-6xl font-title">Kunstdiebjagd in Paris</h1>
@@ -204,19 +201,11 @@
         const rewardMessage = document.getElementById('rewardMessage');
         const rewardGif = document.getElementById('rewardGif');
         const nextLevelBtn = document.getElementById('nextLevelBtn');
-        const keyboardInput = document.getElementById('keyboard-input');
-
-
-        function refocusInput() {
-            // This brings up the keyboard on mobile devices
-            keyboardInput.focus();
-        }
 
         function startGame() {
             startScreen.classList.add('hidden');
             gameContainer.classList.remove('hidden');
             loadLevel(currentLevel);
-            refocusInput();
         }
 
         function loadLevel(level) {
@@ -247,7 +236,6 @@
             
             clearAnswer();
             generateLetterTiles(currentWord.french);
-            refocusInput();
         }
 
         function generateLetterTiles(frenchWord) {
@@ -348,7 +336,6 @@
         }
 
         function showReward() {
-            keyboardInput.blur(); // Hide keyboard when reward shows
             const modal = document.getElementById('rewardModal');
             const gif = document.getElementById('rewardGif');
             
@@ -418,8 +405,6 @@
         }
         
         document.addEventListener('keydown', handleKeyPress);
-        gameContainer.addEventListener('click', refocusInput);
-
 
         const style = document.createElement('style');
         style.innerHTML = `
