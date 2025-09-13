@@ -490,8 +490,8 @@
                 selectLetter(' ');
             } else if (e.key === 'Backspace') {
                 clearBtn.click();
-            } else if (/^[a-zA-Zàâçéèêëîïôûùüÿæœ]$/.test(e.key)) {
-                selectLetter(e.key.toLowerCase());
+            } else if (/^[a-zA-ZàâçéèêëîïôûùüÿæœÄäÖöÜü]$/.test(e.key)) {
+                selectLetter(e.key);
             }
         }
         
