@@ -70,6 +70,16 @@
             transform-origin: center;
             pointer-events: none; /* Make sure it's not clickable */
         }
+        .mode-btn {
+            transition: all 0.2s ease;
+            border: 2px solid #8B4513;
+        }
+        .mode-btn.selected {
+            background-color: #8B4513;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body class="bg-[#FDF5E6] text-[#5D4037] p-4 md:p-8">
@@ -98,8 +108,8 @@
                 <div id="progress-bar" class="bg-[#A0522D] h-full rounded-full progress-bar-inner" style="width: 0%"></div>
             </div>
 
-            <p class="text-center text-xl mb-2">Übersetze dieses deutsche Wort:</p>
-            <h2 id="german-word" class="text-center text-3xl md:text-4xl font-bold mb-6"></h2>
+            <p id="prompt-text" class="text-center text-xl mb-2">Übersetze dieses deutsche Wort:</p>
+            <h2 id="question-word" class="text-center text-3xl md:text-4xl font-bold mb-6"></h2>
 
             <div id="answer-area" class="answer-area rounded-lg p-3 flex justify-center items-center flex-wrap gap-2 mb-6">
                 <!-- Selected letters will appear here -->
@@ -124,6 +134,22 @@
     <div id="startScreen" class="min-h-screen flex flex-col justify-center items-center text-center p-4">
         <h1 class="text-5xl sm:text-6xl md:text-7xl font-title mb-4">Kunstdiebjagd in Paris</h1>
         <p class="text-xl md:text-2xl mb-8 max-w-2xl">Ein Französisch-Vokabelspiel, um dein Wissen zu testen und einen Dieb zu fangen!</p>
+        
+        <div id="mode-selection" class="mb-8">
+            <p class="mb-4 text-lg">Wähle deine Ermittlungsmethode:</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="mode-de-fr" class="mode-btn selected px-6 py-3 bg-white text-[#8B4513] rounded-lg shadow-md font-bold">
+                    Deutsch => Französisch
+                </button>
+                <button id="mode-fr-de" class="mode-btn px-6 py-3 bg-white text-[#8B4513] rounded-lg shadow-md font-bold">
+                    Französisch => Deutsch
+                </button>
+                <button id="mode-mixed" class="mode-btn px-6 py-3 bg-white text-[#8B4513] rounded-lg shadow-md font-bold">
+                    Alles
+                </button>
+            </div>
+        </div>
+
         <button id="start-btn" class="px-10 py-4 bg-[#556B2F] text-white rounded-lg shadow-xl hover:bg-[#6B8E23] transition-transform hover:scale-105 transform text-2xl font-bold">Ermittlung starten</button>
     </div>
 
@@ -184,18 +210,21 @@
         ];
         
         let currentLevel = 1;
-        let wordsForLevel = []; // This will be our dynamic queue of words to ask
+        let wordsForLevel = [];
         let initialWordCount = 0;
         let isIncorrectState = false;
         let isAnswerLocked = false;
         let selectedLetters = [];
+        let gameMode = 'de-fr'; // 'de-fr', 'fr-de', 'mixed'
+        let currentCorrectAnswer = '';
 
         const startScreen = document.getElementById('startScreen');
         const startBtn = document.getElementById('start-btn');
         const gameContainer = document.getElementById('gameContainer');
         const levelDisplay = document.getElementById('level');
         const wordCounterDisplay = document.getElementById('word-counter');
-        const germanWordDisplay = document.getElementById('german-word');
+        const questionWordDisplay = document.getElementById('question-word');
+        const promptTextDisplay = document.getElementById('prompt-text');
         const answerArea = document.getElementById('answer-area');
         const letterOptions = document.getElementById('letter-options');
         const checkBtn = document.getElementById('check-btn');
@@ -208,6 +237,25 @@
         const rewardMessage = document.getElementById('rewardMessage');
         const rewardGif = document.getElementById('rewardGif');
         const nextLevelBtn = document.getElementById('nextLevelBtn');
+        const modeSelectionContainer = document.getElementById('mode-selection');
+
+        function setGameMode(mode) {
+            gameMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.getElementById(`mode-${mode}`).classList.add('selected');
+        }
+
+        modeSelectionContainer.addEventListener('click', (e) => {
+            if (e.target.id === 'mode-de-fr') {
+                setGameMode('de-fr');
+            } else if (e.target.id === 'mode-fr-de') {
+                setGameMode('fr-de');
+            } else if (e.target.id === 'mode-mixed') {
+                setGameMode('mixed');
+            }
+        });
 
         function startGame() {
             startScreen.classList.add('hidden');
@@ -219,13 +267,12 @@
             currentLevel = level;
             const words = vocabulary.filter(word => word.level === currentLevel);
             initialWordCount = words.length;
-            wordsForLevel = shuffleArray(words); // Shuffle words for random order
+            wordsForLevel = shuffleArray(words);
             levelDisplay.textContent = `Level ${currentLevel}`;
             loadQuestion();
         }
 
         function loadQuestion() {
-            // Reset state from a possible previous incorrect answer
             isIncorrectState = false;
             isAnswerLocked = false;
             clearBtn.disabled = false;
@@ -239,20 +286,37 @@
             }
 
             const currentWord = wordsForLevel[0];
+            let questionText, promptText;
+            let direction = gameMode;
+
+            if (direction === 'mixed') {
+                direction = Math.random() < 0.5 ? 'de-fr' : 'fr-de';
+            }
+
+            if (direction === 'de-fr') {
+                questionText = currentWord.german;
+                currentCorrectAnswer = currentWord.french;
+                promptText = 'Übersetze dieses deutsche Wort:';
+            } else { // fr-de
+                questionText = currentWord.french;
+                currentCorrectAnswer = currentWord.german;
+                promptText = 'Übersetze dieses französische Wort:';
+            }
+            
             storyText.textContent = currentWord.story;
-            germanWordDisplay.textContent = currentWord.german;
+            questionWordDisplay.textContent = questionText;
+            promptTextDisplay.textContent = promptText;
             wordCounterDisplay.textContent = `Wort ${initialWordCount - wordsForLevel.length + 1} / ${initialWordCount}`;
             updateProgressBar();
             
             clearAnswer();
-            generateLetterTiles(currentWord.french);
+            generateLetterTiles(currentCorrectAnswer);
         }
 
-        function generateLetterTiles(frenchWord) {
+        function generateLetterTiles(answerWord) {
             letterOptions.innerHTML = '';
-            const correctLetters = frenchWord.replace(/\s/g, '').split('');
+            const correctLetters = answerWord.replace(/\s/g, '').split('');
 
-            // Add some distractor letters
             const alphabet = 'abcdefghijklmnopqrstuvwxyzéàèçâêîôû';
             let distractors = [];
             while (distractors.length < 5) {
@@ -316,37 +380,32 @@
             if (isAnswerLocked) return;
             isAnswerLocked = true;
 
-            // Disable all interactive elements
             clearBtn.disabled = true;
             checkBtn.disabled = true;
             const letterTiles = letterOptions.querySelectorAll('button');
             letterTiles.forEach(tile => tile.disabled = true);
             
             const userAnswer = selectedLetters.join('');
-            const currentWord = wordsForLevel[0];
-            const correctAnswer = currentWord.french;
-
-            if (userAnswer === correctAnswer) {
+            
+            if (userAnswer === currentCorrectAnswer) {
                 feedbackContainer.innerHTML = `<p class="feedback-correct font-bold">Korrekt! Gut gemacht, Detektiv.</p>`;
-                wordsForLevel.shift(); // Correct, so remove word from queue
+                wordsForLevel.shift();
                 setTimeout(() => {
                     loadQuestion();
                 }, 1500);
             } else {
                 isIncorrectState = true;
-                const explanation = currentWord.french;
-                feedbackContainer.innerHTML = `<p class="feedback-incorrect font-bold">Nicht ganz. Le Corbeau ist raffiniert!</p><p>Die richtige Antwort ist: <strong>${explanation}</strong></p>`;
+                feedbackContainer.innerHTML = `<p class="feedback-incorrect font-bold">Nicht ganz. Le Corbeau ist raffiniert!</p><p>Die richtige Antwort ist: <strong>${currentCorrectAnswer}</strong></p>`;
                 checkBtn.textContent = 'Nächstes Wort';
-                checkBtn.disabled = false; // Re-enable only the check button to proceed
+                checkBtn.disabled = false;
                 shakeElement(gameContainer.querySelector('.clue-card'));
 
-                // Incorrect, so move word to a random later position in the queue
                 const failedWord = wordsForLevel.shift();
                 if (wordsForLevel.length > 0) {
                     const insertIndex = 1 + Math.floor(Math.random() * wordsForLevel.length);
                     wordsForLevel.splice(insertIndex, 0, failedWord);
                 } else {
-                    wordsForLevel.push(failedWord); // Add it back if it's the last word
+                    wordsForLevel.push(failedWord);
                 }
             }
         }
@@ -413,17 +472,24 @@
         }
 
         function handleKeyPress(e) {
-            if (isAnswerLocked || gameContainer.classList.contains('hidden') || !rewardModal.classList.contains('hidden')) {
+            if (gameContainer.classList.contains('hidden') || !rewardModal.classList.contains('hidden')) {
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                checkBtn.click();
+                return;
+            }
+
+            if (isAnswerLocked) {
                 return;
             }
 
             if (e.key === ' ') {
-                e.preventDefault(); // Prevent button click on space
+                e.preventDefault();
                 selectLetter(' ');
-            } else if (e.key === 'Enter') {
-                checkBtn.click(); // Programmatically click the button to handle both states
             } else if (e.key === 'Backspace') {
-                clearBtn.click(); // Programmatically click the clear button
+                clearBtn.click();
             } else if (/^[a-zA-Zàâçéèêëîïôûùüÿæœ]$/.test(e.key)) {
                 selectLetter(e.key.toLowerCase());
             }
