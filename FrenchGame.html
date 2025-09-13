@@ -57,7 +57,7 @@
         .story-container {
              background-image: url('https://www.transparenttextures.com/patterns/old-paper.png');
         }
-        #rewardModal, #motivationModal {
+        #rewardModal {
             transition: opacity 0.3s ease;
         }
         .stamp {
@@ -136,15 +136,6 @@
             <button id="nextLevelBtn" class="px-6 py-2 bg-[#556B2F] text-white rounded-lg shadow-md hover:bg-[#6B8E23] transition-colors font-bold text-lg">Ermittlung fortsetzen</button>
         </div>
     </div>
-    
-    <!-- Motivation Modal -->
-    <div id="motivationModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center hidden opacity-0">
-        <div class="bg-white p-8 rounded-lg text-center shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-transform duration-300">
-            <h2 id="motivationQuote" class="text-2xl font-title mb-4">Gute Arbeit!</h2>
-            <img id="motivationGif" src="" alt="Motivierendes GIF" class="mx-auto rounded-lg shadow-lg mb-6 max-h-64">
-            <button id="continueBtn" class="px-6 py-2 bg-[#556B2F] text-white rounded-lg shadow-md hover:bg-[#6B8E23] transition-colors font-bold text-lg">Weiter</button>
-        </div>
-    </div>
 
 
     <script>
@@ -187,24 +178,9 @@
         ];
 
         const rewardGifs = [
-            "https://i.gifer.com/Aq.gif",
-            "https://i.gifer.com/1V8t.gif",
-            "https://i.gifer.com/2DV.gif"
-        ];
-
-        const motivationalQuotes = [
-            "Stark! Du bist auf der richtigen Spur.",
-            "Ausgezeichnet, Detektiv! Nichts entgeht dir.",
-            "Gute Arbeit! Le Corbeau wird langsam nervös.",
-            "Weiter so! Jedes Wort ist ein Schritt näher.",
-            "Fantastisch! Deine Ermittlungen sind tadellos."
-        ];
-
-        const motivationalGifs = [
-            "https://i.gifer.com/18Pe.gif",
-            "https://i.gifer.com/2GU.gif",
-            "https://i.gifer.com/C9Db.gif",
-            "https://i.gifer.com/6fr.gif"
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExejE2MXY4N2R1Z2o0NWExdnhuODhvdTVuajB2bDY3eDRocW5oc2Q0YyZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/3o7abKhOpu0NwenH3O/giphy.gif",
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzJjc3NmaDhja3FscXB1M2d0OHJ6a2FmM3J0MWozc2E0NnZzcnNmdSZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/kEKcOWl8RMLde/giphy.gif",
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTRiNjd5ZHNqZm1ldmJ0cTNpZnJkZXlmeGIwYWV3ZzV4aXBqOHRjayZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/SggILpM5fjkkw/giphy.gif"
         ];
         
         let currentLevel = 1;
@@ -227,17 +203,11 @@
         const feedbackContainer = document.getElementById('feedback-container');
         const progressBar = document.getElementById('progress-bar');
         const storyText = document.getElementById('story-text');
-        
         const rewardModal = document.getElementById('rewardModal');
         const rewardTitle = document.getElementById('rewardTitle');
         const rewardMessage = document.getElementById('rewardMessage');
         const rewardGif = document.getElementById('rewardGif');
         const nextLevelBtn = document.getElementById('nextLevelBtn');
-
-        const motivationModal = document.getElementById('motivationModal');
-        const motivationQuote = document.getElementById('motivationQuote');
-        const motivationGif = document.getElementById('motivationGif');
-        const continueBtn = document.getElementById('continueBtn');
 
         function startGame() {
             startScreen.classList.add('hidden');
@@ -255,6 +225,7 @@
         }
 
         function loadQuestion() {
+            // Reset state from a possible previous incorrect answer
             isIncorrectState = false;
             isAnswerLocked = false;
             clearBtn.disabled = false;
@@ -281,6 +252,7 @@
             letterOptions.innerHTML = '';
             const correctLetters = frenchWord.replace(/\s/g, '').split('');
 
+            // Add some distractor letters
             const alphabet = 'abcdefghijklmnopqrstuvwxyzéàèçâêîôû';
             let distractors = [];
             while (distractors.length < 5) {
@@ -344,9 +316,11 @@
             if (isAnswerLocked) return;
             isAnswerLocked = true;
 
+            // Disable all interactive elements
             clearBtn.disabled = true;
             checkBtn.disabled = true;
-            letterOptions.querySelectorAll('button').forEach(tile => tile.disabled = true);
+            const letterTiles = letterOptions.querySelectorAll('button');
+            letterTiles.forEach(tile => tile.disabled = true);
             
             const userAnswer = selectedLetters.join('');
             const currentWord = wordsForLevel[0];
@@ -354,31 +328,25 @@
 
             if (userAnswer === correctAnswer) {
                 feedbackContainer.innerHTML = `<p class="feedback-correct font-bold">Korrekt! Gut gemacht, Detektiv.</p>`;
-                wordsForLevel.shift(); 
-                updateProgressBar();
-
-                const wordsDone = initialWordCount - wordsForLevel.length;
-
-                if (wordsDone > 0 && wordsDone % 5 === 0 && wordsForLevel.length > 0) {
-                    setTimeout(showMotivation, 1200);
-                } else {
-                    setTimeout(loadQuestion, 1500);
-                }
-
+                wordsForLevel.shift(); // Correct, so remove word from queue
+                setTimeout(() => {
+                    loadQuestion();
+                }, 1500);
             } else {
                 isIncorrectState = true;
                 const explanation = currentWord.french;
                 feedbackContainer.innerHTML = `<p class="feedback-incorrect font-bold">Nicht ganz. Le Corbeau ist raffiniert!</p><p>Die richtige Antwort ist: <strong>${explanation}</strong></p>`;
                 checkBtn.textContent = 'Nächstes Wort';
-                checkBtn.disabled = false;
+                checkBtn.disabled = false; // Re-enable only the check button to proceed
                 shakeElement(gameContainer.querySelector('.clue-card'));
 
+                // Incorrect, so move word to a random later position in the queue
                 const failedWord = wordsForLevel.shift();
                 if (wordsForLevel.length > 0) {
                     const insertIndex = 1 + Math.floor(Math.random() * wordsForLevel.length);
                     wordsForLevel.splice(insertIndex, 0, failedWord);
                 } else {
-                    wordsForLevel.push(failedWord);
+                    wordsForLevel.push(failedWord); // Add it back if it's the last word
                 }
             }
         }
@@ -389,30 +357,14 @@
             progressBar.style.width = `${progress}%`;
         }
 
-        function showMotivation() {
-            motivationQuote.textContent = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-            motivationGif.src = motivationalGifs[Math.floor(Math.random() * motivationalGifs.length)];
-            
-            motivationModal.classList.remove('hidden');
-            setTimeout(() => {
-                motivationModal.classList.remove('opacity-0');
-                motivationModal.querySelector('div').classList.add('scale-100');
-            }, 10);
-        }
-
-        function hideMotivation() {
-            motivationModal.classList.add('opacity-0');
-            motivationModal.querySelector('div').classList.remove('scale-100');
-            setTimeout(() => {
-                 motivationModal.classList.add('hidden');
-            }, 300);
-        }
-
         function showReward() {
+            const modal = document.getElementById('rewardModal');
+            const gif = document.getElementById('rewardGif');
+            
             if (currentLevel < 3) {
                 rewardTitle.textContent = `Level ${currentLevel} abgeschlossen!`;
                 rewardMessage.textContent = `Hervorragende Arbeit! Du hast Le Corbeau in die Enge getrieben. Er hat eine Karte zu seinem nächsten Versteck hinterlassen.`;
-                rewardGif.src = rewardGifs[currentLevel - 1];
+                gif.src = rewardGifs[currentLevel - 1];
                 nextLevelBtn.textContent = 'Ermittlung fortsetzen';
                 nextLevelBtn.onclick = () => {
                     currentLevel++;
@@ -422,25 +374,26 @@
             } else {
                 rewardTitle.textContent = `Du hast Le Corbeau gefasst!`;
                 rewardMessage.textContent = `Gratuliere, Detektiv! Du hast den Dieb erfolgreich aufgespürt und die gestohlene Kunst sichergestellt. Paris ist dank dir wieder sicher!`;
-                rewardGif.src = 'https://i.gifer.com/PYh.gif';
+                gif.src = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2Y0M3JkOG40czh3MWRhYmd1MDM3bTZuMnE2a2x6ZmptZ2JmYjN0MSZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/3oFzmf92nEh2I1y4vK/giphy.gif';
                 nextLevelBtn.textContent = 'Nochmal spielen';
                  nextLevelBtn.onclick = () => {
                     location.reload();
                 };
             }
             
-            rewardModal.classList.remove('hidden');
+            modal.classList.remove('hidden');
             setTimeout(() => {
-                rewardModal.classList.remove('opacity-0');
-                rewardModal.querySelector('div').classList.add('scale-100');
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.add('scale-100');
             }, 10);
         }
 
         function hideReward() {
-            rewardModal.classList.add('opacity-0');
-            rewardModal.querySelector('div').classList.remove('scale-100');
+            const modal = document.getElementById('rewardModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
             setTimeout(() => {
-                 rewardModal.classList.add('hidden');
+                 modal.classList.add('hidden');
             }, 300);
         }
         
@@ -460,15 +413,18 @@
         }
 
         function handleKeyPress(e) {
-            if (isAnswerLocked || gameContainer.classList.contains('hidden') || !rewardModal.classList.contains('hidden') || !motivationModal.classList.contains('hidden')) {
+            if (isAnswerLocked || gameContainer.classList.contains('hidden') || !rewardModal.classList.contains('hidden')) {
                 return;
             }
 
-            if (e.key === 'Enter') {
-                checkBtn.click();
+            if (e.key === ' ') {
+                e.preventDefault(); // Prevent button click on space
+                selectLetter(' ');
+            } else if (e.key === 'Enter') {
+                checkBtn.click(); // Programmatically click the button to handle both states
             } else if (e.key === 'Backspace') {
-                clearBtn.click();
-            } else if (/^[a-zA-Z\sàâçéèêëîïôûùüÿæœ]$/.test(e.key)) {
+                clearBtn.click(); // Programmatically click the clear button
+            } else if (/^[a-zA-Zàâçéèêëîïôûùüÿæœ]$/.test(e.key)) {
                 selectLetter(e.key.toLowerCase());
             }
         }
@@ -503,11 +459,6 @@
             if (isAnswerLocked) return;
             selectedLetters.pop();
             renderAnswer();
-        });
-
-        continueBtn.addEventListener('click', () => {
-            hideMotivation();
-            loadQuestion();
         });
 
     </script>
