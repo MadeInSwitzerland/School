@@ -214,9 +214,9 @@
         ];
 
         const rewardGifs = [
-            "https://i.gifer.com/Aq.gif",
-            "https://i.gifer.com/1V8t.gif",
-            "https://i.gifer.com/2DV.gif"
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExejE2MXY4N2R1Z2o0NWExdnhuODhvdTVuajB2bDY3eDRocW5oc2Q0YyZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/3o7abKhOpu0NwenH3O/giphy.gif",
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzJjc3NmaDhja3FscXB1M2d0OHJ6a2FmM3J0MWozc2E0NnZzcnNmdSZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/kEKcOWl8RMLde/giphy.gif",
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTRiNjd5ZHNqZm1ldmJ0cTNpZnJkZXlmeGIwYWV3ZzV4aXBqOHRjayZlcD12MV9pbnRlcm5hbF_naWZfYnlfaWQmY3Q9Zw/SggILpM5fjkkw/giphy.gif"
         ];
 
         const motivationalGifs = [
@@ -226,6 +226,18 @@
             "https://i.gifer.com/6fr.gif"
         ];
         
+        // Function to preload images
+        function preloadGifs(gifArray) {
+            gifArray.forEach(src => {
+                const img = new Image();
+                img.src = src;
+            });
+        }
+
+        // Preload all GIFs as soon as the script runs
+        preloadGifs(rewardGifs);
+        preloadGifs(motivationalGifs);
+
         let currentLevel = 1;
         let wordsForLevel = [];
         let initialWordCount = 0;
